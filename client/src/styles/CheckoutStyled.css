@@ -1,0 +1,80 @@
+.checkout-container {
+  max-width: 100%;
+  padding: 2rem 1rem;
+  text-align: center;
+  font-family: 'Playfair Display', 'Arial';
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.checkout-box {
+  background: #fff;
+  padding: 2.5rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.checkout-heading {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  color: #1c1c1c;
+}
+
+.checkout-details {
+  font-size: 1.1rem;
+  margin-bottom: 2rem;
+  color: #333;
+  line-height: 1.7;
+}
+
+.checkout-details strong {
+  font-weight: 600;
+  color: #000;
+}
+
+.pay-now-button {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  font-size: 1.1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  font-family: 'Playfair Display', 'Arial';
+}
+
+.pay-now-button:hover {
+  background-color: #1e40af;
+}
+
+.footer {
+  font-size: 0.9rem;
+  color: #777;
+  font-family: 'Playfair Display', 'Arial';
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+  .checkout-box {
+    padding: 1.5rem;
+    margin: 0 1rem;
+  }
+
+  .checkout-heading {
+    font-size: 1.6rem;
+  }
+
+  .checkout-details {
+    font-size: 1rem;
+  }
+
+  .pay-now-button {
+    font-size: 1rem;
+    padding: 10px 20px;
+  }
+}

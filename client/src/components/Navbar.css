@@ -1,0 +1,97 @@
+/* Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  background-color: var(--bg-light);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+body.dark .header {
+  background-color: var(--bg-dark);
+}
+
+.logo-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1;
+}
+
+.zesthaus {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.75rem;
+  letter-spacing: 0.05rem;
+  font-weight: 600;
+  color: #000;
+}
+
+.events {
+  font-family: 'Arial', sans-serif;
+  font-size: 0.9rem;
+  font-weight: bold;
+  letter-spacing: 0.35rem;
+  color: #000;
+  margin-top: 0.25rem;
+  text-transform: uppercase;
+}
+
+body.dark .zesthaus,
+body.dark .events {
+  color: #fff;
+}
+
+.menu-icon {
+  display: none;
+  cursor: pointer;
+}
+
+.nav-links {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.nav-links a {
+  font-family: sans-serif;
+  font-size: 1rem;
+  text-decoration: none;
+  color: var(--text-light);
+  transition: color 0.3s;
+}
+
+body.dark .nav-links a {
+  color: var(--text-dark);
+}
+
+.nav-links a:hover {
+  text-decoration: underline;
+  color: #555;
+}
+
+@media (max-width: 768px) {
+  .menu-icon {
+    display: block;
+  }
+
+  .nav-links {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: var(--bg-light);
+    padding: 1rem 2rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    width: 200px;
+  }
+
+  .nav-links.open {
+    display: flex;
+  }
+
+  body.dark .nav-links {
+    background-color: var(--bg-dark);
+  }
+}

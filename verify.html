@@ -1,0 +1,124 @@
+<!-- Save this as verify.html and open it on your phone's browser -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Mobile QR Ticket Verifier</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+      body { font-family: sans-serif; text-align: center; }
+      #reader { margin: 0 auto; width: 300px; }
+      #result { margin-top: 20px; font-size: 18px; min-height: 60px; }
+      .icon {
+        font-size: 48px;
+        display: block;
+        margin: 0 auto 10px auto;
+      }
+      .success { color: #27ae60; }
+      .fail { color: #e74c3c; }
+      #rescan-btn {
+        margin-top: 18px;
+        padding: 10px 24px;
+        font-size: 16px;
+        background: #222;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        display: none;
+      }
+      #rescan-btn:hover {
+        background: #27ae60;
+      }
+      #auth-container {
+        margin-top: 60px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="auth-container">
+      <h2>Enter Access Password</h2>
+      <input type="password" id="access-password" placeholder="Password" />
+      <button onclick="checkPassword()">Enter</button>
+      <p id="auth-error" style="color:#e74c3c;"></p>
+    </div>
+    <div id="scanner-container" style="display:none;">
+      <h2>Scan Ticket QR Code</h2>
+      <div id="reader"></div>
+      <div id="result"></div>
+      <button id="rescan-btn" onclick="startScanner()">Rescan</button>
+    </div>
+    <script>
+      // Change this password to your secret
+      const ADMIN_PASSWORD = "zesthaus2025";
+
+      function checkPassword() {
+        const input = document.getElementById('access-password').value;
+        if (input === ADMIN_PASSWORD) {
+          document.getElementById('auth-container').style.display = "none";
+          document.getElementById('scanner-container').style.display = "block";
+          startScanner();
+        } else {
+          document.getElementById('auth-error').innerText = "Incorrect password!";
+        }
+      }
+
+      let html5Qr;
+      function showResult(iconHtml, message, iconClass) {
+        document.getElementById('result').innerHTML =
+          `<span class="icon ${iconClass}">${iconHtml}</span><span>${message}</span>`;
+        document.getElementById('rescan-btn').style.display = "inline-block";
+      }
+
+      function onScanSuccess(decodedText, decodedResult) {
+  let bookingId, seatType, name;
+  try {
+    const qrObj = JSON.parse(decodedText);
+    bookingId = qrObj.bookingId;
+    seatType = qrObj.seatType || "";
+    name = qrObj.name || "";
+    if (!bookingId) throw new Error("No bookingId");
+  } catch (e) {
+    showResult("&#10060;", "QR is not valid.", "fail");
+    html5Qr.stop();
+    return;
+  }
+  fetch('http://192.168.0.110:5000/admin/verify-ticket', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer supersecrettoken123'
+    },
+    body: JSON.stringify({ bookingId })
+  })
+  .then(res => res.json())
+  .then(data => {
+    let details = `<br><strong>Name:</strong> ${name}<br><strong>Booking ID:</strong> ${bookingId}`;
+    if (seatType) details += `<br><strong>Seat Type:</strong> ${seatType}`;
+    if (data.message && data.message.toLowerCase().includes("valid")) {
+      showResult("&#10004;", data.message + details, "success");
+    } else if (data.message && data.message.toLowerCase().includes("used")) {
+      showResult("&#10060;", data.message + details, "fail");
+    } else {
+      showResult("&#10060;", "QR is not valid." + details, "fail");
+    }
+    html5Qr.stop();
+  })
+  .catch(() => {
+    showResult("&#10060;", "Network or server error.", "fail");
+    html5Qr.stop();
+  });
+}
+
+      function startScanner() {
+        document.getElementById('result').innerHTML = "";
+        document.getElementById('rescan-btn').style.display = "none";
+        html5Qr = new Html5Qrcode("reader");
+        html5Qr.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: 250 },
+          onScanSuccess
+        );
+      }
+    </script>
+  </body>
+</html>

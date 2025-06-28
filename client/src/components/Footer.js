@@ -1,7 +1,10 @@
 function Footer() {
   return (
-    <footer className="bg-dark text-white text-center py-3 mt-5">
-      <p>&copy; 2025 Qawwali Night • All Rights Reserved</p>
+    <footer id="contact" className="footer">
+      <p className="contact-text">
+        Contact us: <a href="mailto:zesthaus.events@gmail.com">zesthaus.events@gmail.com</a>
+      </p>
+      <p className="copyright">&copy; 2025 Zesthaus Events. All rights reserved.</p>
     </footer>
   );
 }

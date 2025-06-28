@@ -1,9 +1,24 @@
-import { SignIn } from '@clerk/clerk-react';
+import { SignIn } from "@clerk/clerk-react";
+import { useLocation } from "react-router-dom";
 
-const SignInPage = () => (
-  <div className="container mt-5">
-    <h2>Sign In</h2>
-    <SignIn routing="path" path="/sign-in" />
-  </div>
-);
-export default SignInPage;
+const styles = {
+  container: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '100vh',
+    backgroundColor: '#f5f5f5',
+  },
+};
+
+export default function SignInPage() {
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const redirectTo = params.get("redirectTo") || "/";
+
+  return (
+    <div style={styles.container}>
+      <SignIn redirectUrl={redirectTo} />
+    </div>
+  );
+}
