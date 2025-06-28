@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
-// const nodemailer = require('nodemailer');
+const nodemailer = require("nodemailer");
 const QRCode = require('qrcode');
 require('dotenv').config();
 
@@ -11,11 +11,8 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
 
-// Connect to MongoDB
-// const MONGO_URI = "mongodb+srv://shaikhdanishpc:Qwerty@123@cluster0.pwup88w.mongodb.net/eventdb";
-const MONGO_URI = "mongodb+srv://shaikhdanishpc:iwD7ZbIFo6ziMZAE@cluster0.pwup88w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
-
-// const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://shaikhdanishpc:tcvnA05k87dqkt2A@cluster0.pwup88w.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+// Connect to MongoDB using env variable
+const MONGO_URI = process.env.MONGO_URI;
 mongoose.connect(MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
@@ -192,23 +189,20 @@ app.post('/admin/offline-booking', async (req, res) => {
   }
 });
 
-const nodemailer = require("nodemailer");
-
-// Reuse your transporter or define it once at the top
+// Email transporter using env variables
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: 'zesthaus.events@gmail.com',
-    pass: 'gwbvnvdwoavtlcdb'
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
   }
 });
 
 // Utility function to send QR email
 async function sendEmailWithQR(to, qrDataUrl) {
-  // Extract base64 data
   const base64Data = qrDataUrl.replace(/^data:image\/png;base64,/, "");
   const mailOptions = {
-    from: 'zesthaus.events@gmail.com',
+    from: process.env.EMAIL_USER,
     to,
     subject: '🎫 Qawwali Night Ticket Confirmation (Offline)',
     html: `
@@ -239,6 +233,7 @@ function getSeatType(seat) {
   return "";
 }
 
+// const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);
 });
