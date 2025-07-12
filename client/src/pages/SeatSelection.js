@@ -1,111 +1,230 @@
-// src/pages/SeatSelection.js
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useUser } from "@clerk/clerk-react";
-// import "../SeatSelection.css";
-import "../styles/SeatSelection1.css"; // Adjust the path as necessary
+import "../styles/SeatSelection1.css";
+
+const FRONT_ROW_LABELS = [
+  ...Array.from({ length: 25 }, (_, i) => `A${i + 1}`),
+  ...Array.from({ length: 25 }, (_, i) => `B${i + 1}`),
+  ...Array.from({ length: 25 }, (_, i) => `C${i + 1}`),
+];
+const TOTAL_FRONTROW = 75;
+const TOTAL_GENERAL = 325;
 
 const SeatSelection = () => {
-  const [selectedSeats, setSelectedSeats] = useState([]);
-  const { user } = useUser();
+  const [frontRowCount, setFrontRowCount] = useState(0);
+  const [frontRowSeats, setFrontRowSeats] = useState([]);
+  const [generalCount, setGeneralCount] = useState(0);
+  const [combo, setCombo] = useState(null);
   const navigate = useNavigate();
 
+  // Simulate already booked front row seats (should come from backend)
+  const [bookedFrontRowSeats, setBookedFrontRowSeats] = useState([]);
+
   useEffect(() => {
-    const saved = localStorage.getItem("selectedSeats");
+    // Load from localStorage if needed
+    const saved = localStorage.getItem("seatSelection");
     if (saved) {
-      setSelectedSeats(JSON.parse(saved));
+      const { frontRowCount, generalCount, frontRowSeats } = JSON.parse(saved);
+      setFrontRowCount(frontRowCount || 0);
+      setGeneralCount(generalCount || 0);
+      setFrontRowSeats(frontRowSeats || []);
     }
+    // Simulate fetch booked seats from backend
+    // setBookedFrontRowSeats([...]); // e.g., ["A1", "A2"]
   }, []);
 
-  const handleSelect = (seat) => {
-    setSelectedSeats((prev) =>
-      prev.includes(seat) ? prev.filter((s) => s !== seat) : [...prev, seat]
+  // Assign next available front row seats when count changes
+  useEffect(() => {
+    const available = FRONT_ROW_LABELS.filter(
+      seat => !bookedFrontRowSeats.includes(seat)
+    );
+    setFrontRowSeats(available.slice(0, frontRowCount));
+  }, [frontRowCount, bookedFrontRowSeats]);
+
+  // Combo logic: override counts if combo is selected
+  useEffect(() => {
+    if (combo === "frontrow2") {
+      setFrontRowCount(2);
+      setGeneralCount(0);
+    } else if (combo === "general4") {
+      setFrontRowCount(0);
+      setGeneralCount(4);
+    }
+    // If no combo, do not change counts
+  }, [combo]);
+
+  const handleVIPClick = () => {
+    alert(
+      "VIP tables can only be booked offline. Please contact us on Instagram. Each VIP table seats 8 people and must be booked as a whole table."
     );
   };
 
   const handleContinue = () => {
-    if (selectedSeats.length === 0) {
-      alert("Please select at least one seat.");
+    if (frontRowCount === 0 && generalCount === 0) {
+      alert("Please select at least one ticket for Front Row or General.");
       return;
     }
-
-    localStorage.setItem("selectedSeats", JSON.stringify(selectedSeats));
-
+    if (frontRowCount > (TOTAL_FRONTROW - bookedFrontRowSeats.length)) {
+      alert("Not enough Front Row seats available.");
+      return;
+    }
+    if (generalCount > TOTAL_GENERAL) {
+      alert("Not enough General tickets available.");
+      return;
+    }
+    const selection = {
+      frontRowCount,
+      generalCount,
+      frontRowSeats,
+      combo,
+    };
+    localStorage.setItem("seatSelection", JSON.stringify(selection));
+    // Use localStorage to check if user is logged in
+    const user = JSON.parse(localStorage.getItem("user") || "null");
     if (!user) {
-      // Pass intended path as query param
       navigate(`/sign-in?redirectTo=/checkout`);
     } else {
-      navigate("/checkout", { state: { selectedSeats } });
+      navigate("/checkout", { state: selection });
     }
   };
 
-  const seatButton = (label, category) => {
-    const isSelected = selectedSeats.includes(label);
-    return (
-      <button
-        key={label}
-        onClick={() => handleSelect(label)}
-        className={`seat ${isSelected ? "selected" : ""}`}
-      >
-        {label}
-      </button>
-    );
-  };
-
-  const validSeat = (seat) =>
-    typeof seat === "string" &&
-    (seat.startsWith("VIP-") ||
-     seat.startsWith("1-") ||
-     seat.startsWith("2-") ||
-     seat.startsWith("R-"));
-
-  const filteredSeats = selectedSeats.filter(validSeat);
-
   return (
-    <div className="page-container">
-      <h1 className="main-heading">Select Your Seat</h1>
+    <div className="layout-container">
+      <h1 className="main-heading">Select Your Section</h1>
 
-      <div className="layout-card">
-        <div className="layout-flex responsive-flex">
-          {/* VIP Section - Left Vertical */}
-          <div className="section-card section-vip">
-            <h2 className="section-title">VIP - ₹5000</h2>
-            <div className="seat-grid-vertical responsive-vertical">
-              {[...Array(8)].map((_, i) => seatButton(`VIP-${i + 1}`, "VIP"))}
+      <div className="venue-layout">
+        <div className="stage">STAGE</div>
+
+        <div className="layout-row">
+          <div className="vip-block">
+            <div className="label">
+              VIP <span>₹9999 Per Table</span>
+            </div>
+            <div className="seat-row">
+              {[...Array(4)].map((_, i) => (
+                <button
+                  key={`VIP-${i + 1}`}
+                  className="seat vip-seat"
+                  onClick={handleVIPClick}
+                  type="button"
+                  style={{ cursor: "pointer" }}
+                >
+                  VIP-{i + 1}
+                </button>
+              ))}
+            </div>
+            <div className="vip-note" style={{ marginTop: 8, color: "#d35400", fontSize: "0.95rem" }}>
+              Each VIP table seats 8 people. Whole table booking only.<br />
+              <b>
+                Contact us on Instagram to book VIP:<br />
+                <a href="https://www.instagram.com/zesthaus_events" target="_blank" rel="noopener noreferrer" style={{ color: "#d35400", textDecoration: "underline" }}>
+                  @zesthaus_events
+                </a>
+              </b>
             </div>
           </div>
-
-          <div className="center-layout">
-            <div className="stage-box">STAGE</div>
-
-            <div className="section-card section-firstrow">
-              <h2 className="section-title">Front Row - ₹799</h2>
-              <div className="seat-grid-horizontal responsive-horizontal">
-                {[...Array(8)].map((_, i) => seatButton(`1-${i + 1}`, "frontRow"))}
-              </div>
+          <div className="frontrow-block">
+            <div className="label">
+              Front Row&nbsp;
+              <span>
+                <span style={{ textDecoration: "line-through", color: "#b71c1c", fontWeight: 400, marginRight: 6 }}>
+                  ₹999
+                </span>
+                <span style={{ color: "#388e3c", fontWeight: 600 }}>₹799</span>
+              </span>
             </div>
-
-            <div className="section-card section-otherrows">
-              <h2 className="section-title">General - ₹599</h2>
-              <div className="seat-grid-horizontal responsive-horizontal">
-                {[...Array(20)].map((_, i) => seatButton(`2-${i + 1}`, "general"))}
-              </div>
-            </div>
-          </div>
-
-          {/* Regular Section - Right Vertical */}
-          <div className="section-card section-regular">
-            <h2 className="section-title">Regular - ₹2500</h2>
-            <div className="seat-grid-vertical responsive-vertical">
-              {[...Array(8)].map((_, i) => seatButton(`R-${i + 1}`, "Regular"))}
+            <div style={{ marginTop: "1rem" }}>
+              <label>
+                No. of Tickets:&nbsp;
+                <input
+                  type="number"
+                  min={0}
+                  max={TOTAL_FRONTROW - bookedFrontRowSeats.length}
+                  value={frontRowCount}
+                  onChange={e =>
+                    setFrontRowCount(
+                      Math.max(0, Math.min(TOTAL_FRONTROW - bookedFrontRowSeats.length, Number(e.target.value)))
+                    )
+                  }
+                  style={{ width: 60 }}
+                  disabled={combo === "frontrow2" || combo === "general4"}
+                />
+              </label>
+              {frontRowSeats.length > 0 && (
+                <div style={{ marginTop: 8, fontSize: "0.95rem" }}>
+                  Your seats: {frontRowSeats.join(", ")}
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        <button className="btn btn-success btn-lg" onClick={handleContinue}>
-          Continue to Checkout
-        </button>
+        <div className="general-block">
+          <div className="label">
+            General&nbsp;
+            <span>
+              <span style={{ textDecoration: "line-through", color: "#b71c1c", fontWeight: 400, marginRight: 6 }}>
+                ₹799
+              </span>
+              <span style={{ color: "#388e3c", fontWeight: 600 }}>₹599</span>
+            </span>
+          </div>
+          <div style={{ marginTop: "1rem" }}>
+            <label>
+              No. of Tickets:&nbsp;
+              <input
+                type="number"
+                min={0}
+                max={TOTAL_GENERAL}
+                value={generalCount}
+                onChange={e =>
+                  setGeneralCount(Math.max(0, Math.min(TOTAL_GENERAL, Number(e.target.value)))
+                )}
+                style={{ width: 60 }}
+                disabled={combo === "frontrow2" || combo === "general4"}
+              />
+            </label>
+            <div style={{ marginTop: 8, fontSize: "0.95rem" }}>
+              General is first come, first serve. Max occupancy: 400.
+            </div>
+          </div>
+        </div>
       </div>
+
+      <div className="combo-offers" style={{ margin: "32px 0 16px 0", padding: "16px", background: "#fffbe6", borderRadius: "1rem", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
+        <div style={{ fontWeight: 600, fontSize: "1.1rem", marginBottom: 8 }}>Combo Offers</div>
+        <label style={{ display: "block", marginBottom: 6 }}>
+          <input
+            type="radio"
+            name="combo"
+            checked={combo === "frontrow2"}
+            onChange={() => setCombo("frontrow2")}
+          />
+          <span style={{ marginLeft: 8 }}>2 Front Row Tickets for <b>₹1500</b></span>
+        </label>
+        <label style={{ display: "block", marginBottom: 6 }}>
+          <input
+            type="radio"
+            name="combo"
+            checked={combo === "general4"}
+            onChange={() => setCombo("general4")}
+          />
+          <span style={{ marginLeft: 8 }}>4 General Tickets for <b>₹2199</b></span>
+        </label>
+        <label style={{ display: "block" }}>
+          <input
+            type="radio"
+            name="combo"
+            checked={combo === null}
+            onChange={() => setCombo(null)}
+          />
+          <span style={{ marginLeft: 8 }}>No Combo</span>
+        </label>
+      </div>
+
+      <button className="btn btn-success btn-lg" onClick={handleContinue}>
+        Continue to Checkout
+      </button>
     </div>
   );
 };

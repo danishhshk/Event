@@ -1,89 +1,96 @@
 import React, { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useUser } from "@clerk/clerk-react";
-import '../styles/CheckoutStyled.css'; // Adjust the path as necessary
+import '../styles/CheckoutStyled.css';
 
-// Add or update this mapping at the top of your file
 const seatPrices = {
-  VIP: 5000,
   frontRow: 799,
   general: 599,
 };
 
-// Example getSeatType function
-function getSeatType(seat) {
-  if (typeof seat !== "string") return "";
-  if (seat.startsWith("VIP-")) return "VIP";
-  if (seat.startsWith("1-")) return "frontRow";
-  if (seat.startsWith("2-")) return "general";
-  if (seat.startsWith("R-")) return "general";
-  return "";
-}
-
 function CheckoutStyled() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, isLoaded } = useUser();
 
-  // Get selected seats from navigation state or default to empty array
-  const selectedSeats = location.state?.selectedSeats || [];
+  // Get seat selection from navigation state or localStorage
+  const selection = location.state || JSON.parse(localStorage.getItem("seatSelection") || "{}");
+  const frontRowSeats = selection.frontRowSeats || [];
+  const frontRowCount = selection.frontRowCount || 0;
+  const generalCount = selection.generalCount || 0;
 
-  // Define validSeat and filteredSeats FIRST
-  const validSeat = seat =>
-    typeof seat === "string" &&
-    (seat.startsWith("VIP-") ||
-     seat.startsWith("1-") ||
-     seat.startsWith("2-") ||
-     seat.startsWith("R-"));
+  // Add to your component state
+  const [combo, setCombo] = React.useState(selection.combo || null);
 
-  const filteredSeats = selectedSeats.filter(validSeat);
-
-  // Now you can safely use filteredSeats
-  const totalPrice = filteredSeats.reduce((sum, seat) => {
-    const type = getSeatType(seat);
-    return sum + (seatPrices[type] || seatPrices.general);
-  }, 0);
-
-  const seatTypeSummary = filteredSeats
-    .map(seat => `${seat} (${getSeatType(seat)})`)
-    .join(', ');
-
-  // Redirect if no seats are selected
   useEffect(() => {
-    if (!selectedSeats.length) {
+    if (!frontRowCount && !generalCount) {
+      alert("Please select at least one ticket to proceed to checkout.");
       navigate('/seats');
     }
-  }, [selectedSeats, navigate]);
+  }, [frontRowCount, generalCount, navigate]);
+
+  // Combo price logic
+  let comboPrice = null;
+  let displayFrontRowCount = frontRowCount;
+  let displayGeneralCount = generalCount;
+  let displayFrontRowSeats = frontRowSeats;
+
+  if (combo === "frontrow2") {
+    comboPrice = 1500;
+    displayFrontRowCount = 2;
+    displayGeneralCount = 0;
+    // If user hasn't selected seats, just send empty or auto-select logic if needed
+    displayFrontRowSeats = frontRowSeats.length >= 2 ? frontRowSeats.slice(0, 2) : [];
+  }
+  if (combo === "general4") {
+    comboPrice = 2199;
+    displayFrontRowCount = 0;
+    displayGeneralCount = 4;
+    displayFrontRowSeats = [];
+  }
+
+  const totalPrice = comboPrice !== null
+    ? comboPrice
+    : (frontRowCount * seatPrices.frontRow) + (generalCount * seatPrices.general);
+
+  // Summary for display
+  const seatSummary = [
+    displayFrontRowSeats.length > 0 ? `Front Row: ${displayFrontRowSeats.join(', ')}` : null,
+    displayGeneralCount > 0 ? `General: ${displayGeneralCount} ticket(s)` : null,
+  ].filter(Boolean).join(' | ');
 
   const handlePayment = () => {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
     const options = {
-      key: 'rzp_test_CeKIqjPg3bRr1K', // Replace with your Razorpay Test Key
-      amount: totalPrice * 100, // Amount in paise
+      key: 'rzp_live_YZt9gSDVhJZjNH',
+      amount: totalPrice * 100,
       currency: 'INR',
       name: 'ZESTHAUS Events',
       description: 'Ticket Booking for Qawwali Night',
-      image: '', // Optional logo
+      image: 'logo',
       handler: function (response) {
-        // Save booking to backend after successful payment
-        fetch('http://localhost:5000/api/bookings', {
+        fetch('https://zesthaus-production.up.railway.app/api/bookings', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            seats: selectedSeats,
+            frontRowSeats: displayFrontRowSeats,
+            frontRowCount: displayFrontRowCount,
+            generalCount: displayGeneralCount,
             price: totalPrice,
             paymentId: response.razorpay_payment_id,
+            combo, // send combo info to backend
             user: {
-              name: user?.fullName || '',
-              email: user?.emailAddresses?.[0]?.emailAddress || '',
+              name: user?.name || '',
+              email: user?.email || '',
             }
           })
         })
         .then(res => res.json())
         .then(data => {
-          localStorage.removeItem("selectedSeats"); // <-- Add this line
+          localStorage.removeItem("seatSelection");
           navigate('/confirmation', {
             state: {
-              selectedSeats,
+              frontRowSeats,
+              frontRowCount,
+              generalCount,
               totalPrice,
               paymentId: response.razorpay_payment_id,
             },
@@ -94,9 +101,8 @@ function CheckoutStyled() {
         });
       },
       prefill: {
-        name: user?.fullName || '',
-        email: user?.emailAddresses?.[0]?.emailAddress || '',
-        contact: '9999999999',
+        name: user?.name || '',
+        email: user?.email || '',
       },
       notes: {
         address: 'Mumbai - Event Location',
@@ -120,10 +126,17 @@ function CheckoutStyled() {
       <div className="checkout-box">
         <h1 className="checkout-heading">Checkout</h1>
         <div className="checkout-details">
-          <p><strong>Selected Seats:</strong> {filteredSeats.join(', ') || 'None'}</p>
-          <p><strong>Seat Types:</strong> {seatTypeSummary || 'None'}</p>
+          <p><strong>Selection:</strong> {seatSummary || 'None'}</p>
+          {combo === "frontrow2" && (
+            <p style={{ color: "#388e3c", fontWeight: 600 }}>Combo Applied: 2 Front Row Tickets for ₹1500</p>
+          )}
+          {combo === "general4" && (
+            <p style={{ color: "#388e3c", fontWeight: 600 }}>Combo Applied: 4 General Tickets for ₹2199</p>
+          )}
           <p><strong>Total Price:</strong> ₹{totalPrice}</p>
         </div>
+        {/* Combo selection UI */}
+        
         <button className="pay-now-button" onClick={handlePayment}>Pay Now</button>
       </div>
       <footer className="footer">© 2025 Qawwali Night • All Rights Reserved</footer>

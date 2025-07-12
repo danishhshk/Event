@@ -87,6 +87,29 @@ body.dark .nav-links a {
     width: 200px;
   }
 
+  /* Show the menu as a full-screen overlay when open (mobile) */
+  .nav-links.open {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh; /* Cover the whole viewport */
+    background: rgba(30, 30, 30, 0.97); /* or your preferred color */
+    z-index: 1000; /* Make sure it's above the footer and other content */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-top: 80px; /* adjust if you want space for your header/logo */
+  }
+
+  /* Optional: style menu links for overlay */
+  .nav-links.open .menu-link {
+    font-size: 2rem;
+    margin: 1rem 0;
+    color: #fff;
+  }
+
   .nav-links.open {
     display: flex;
   }
@@ -94,4 +117,27 @@ body.dark .nav-links a {
   body.dark .nav-links {
     background-color: var(--bg-dark);
   }
+
+  .close-menu-btn {
+    position: absolute;
+    top: 1.2rem;
+    right: 1.5rem;
+    background: transparent;
+    border: none;
+    font-size: 2.5rem;
+    color: #fff;
+    cursor: pointer;
+    z-index: 1100;
+  }
+}
+
+/* Navbar.css */
+.logout-btn {
+  background: none;
+  border: none;
+  color: #007bff;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 1rem;
 }

@@ -51,14 +51,19 @@ export default function LandingPage() {
 
   {/* Right - Sticky Details Box */}
   <div className="event-details-box">
-    <p><strong>Date:</strong> 30 June – 1 Aug 2025</p>
+    <p><strong>Date:</strong> 26 July 2025</p>
     <p><strong>Time:</strong> 7:15 PM</p>
     <p><strong>Duration:</strong> 2 Hours</p>
     <p><strong>Age Limit:</strong> 16yrs+</p>
     <p><strong>Language:</strong> Hindi</p>
     <p><strong>Genre:</strong> Comedy</p>
     <p><strong>Venue:</strong> Jio World Centre, Mumbai</p>
-    <p style={{ color: '#D35400', fontWeight: 500 }}>₹999 onwards – Filling Fast</p>
+    <p style={{ color: '#D35400', fontWeight: 500 }}>
+      <span style={{ textDecoration: "line-through", color: "#b71c1c", fontWeight: 400, marginRight: 8 }}>
+        ₹999
+      </span>
+      <span style={{ color: "#388e3c", fontWeight: 600 }}>₹799 onwards</span> – Filling Fast
+    </p>
     <Button className="reserve-button" style={{ marginTop: '1rem' }}>
       Book Now
     </Button>
